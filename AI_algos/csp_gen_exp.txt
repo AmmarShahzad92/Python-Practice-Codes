@@ -1,0 +1,651 @@
+jobs = ['J1', 'J2', 'J3'] 
+workers = ['W1', 'W2', 'W3'] 
+ 
+constraints = { 
+    'W1': ['J3'], 
+    'W2': ['J1'], 
+    'W3': [] 
+} 
+ 
+def is_valid(assignment, worker, job): 
+    if job in constraints.get(worker, []): 
+        return False 
+    if job in assignment.values(): 
+        return False 
+    return True 
+ 
+def backtrack(assignment, workers, jobs, solutions): 
+    if len(assignment) == len(workers): 
+        solutions.append(assignment.copy()) 
+        return 
+ 
+    worker = workers[len(assignment)] 
+    for job in jobs: 
+        if is_valid(assignment, worker, job): 
+            assignment[worker] = job 
+            backtrack(assignment, workers, jobs, solutions) 
+            del assignment[worker] 
+ 
+def find_all_solutions(workers, jobs): 
+    solutions = [] 
+    assignment = {} 
+    backtrack(assignment, workers, jobs, solutions) 
+    return solutions 
+ 
+solutions = find_all_solutions(workers, jobs) 
+ 
+if solutions: 
+    print("All possible solutions:") 
+    for solution in solutions: 
+        print(solution) 
+else: 
+    print("No valid solution is possible.")
+
+
+
+
+
+
+
+
+# other code
+courses = ['C1', 'C2', 'C3', 'C4', 'C5'] 
+time_slots = ['Morning', 'Afternoon', 'Evening'] 
+ 
+constraints = { 
+    'C1': ['C2'], 
+    'C2': ['C1', 'C3'], 
+    'C3': ['C2', 'C4'], 
+    'C4': ['C3', 'C5'], 
+    'C5': ['C4'] 
+} 
+ 
+def is_valid(assignment, course, slot): 
+     
+    for neighbor in constraints.get(course, []): 
+        if neighbor in assignment and assignment[neighbor] == slot: 
+            return False 
+ 
+    count = 0 
+    for c in assignment: 
+        if assignment[c] == slot: 
+            count += 1 
+    if count >= 2: 
+        return False 
+ 
+    return True 
+ 
+def backtrack(assignment): 
+    if len(assignment) == len(courses): 
+        return assignment 
+ 
+    course = courses[len(assignment)] 
+    for slot in time_slots: 
+        if is_valid(assignment, course, slot): 
+            assignment[course] = slot 
+            result = backtrack(assignment) 
+            if result: 
+                return result 
+            del assignment[course] 
+ 
+    return None 
+ 
+solution = backtrack({}) 
+ 
+if solution: 
+    print("Valid Exam Schedule:") 
+    print(solution) 
+else: 
+    print("No valid schedule found.")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#Genetic
+
+
+import random 
+import string 
+ 
+class GA: 
+    def __init__(self, target, populationSize): 
+        self.target = target 
+        self.length = len(target) 
+        self.populationSize = populationSize 
+        self.population = {} 
+        self.totalFitness = 0 
+ 
+        for i in range(populationSize): 
+            individual = ''.join(random.choice(string.ascii_lowercase) for _ in range(self.length)) 
+            fitness = self.calculateFitness(individual) 
+            self.population[i] = [individual, fitness] 
+            self.totalFitness += fitness 
+ 
+    def calculateFitness(self, individual): 
+        return sum(1 for i in range(self.length) if individual[i] == self.target[i]) 
+ 
+    def updatePopulationFitness(self): 
+        self.totalFitness = 0 
+        for i in self.population: 
+            fitness = self.calculateFitness(self.population[i][0]) 
+            self.population[i][1] = fitness 
+            self.totalFitness += fitness 
+ 
+    def selectParents(self): 
+        rouletteWheel = [] 
+        for i in self.population: 
+            rouletteWheel += [i] * (self.population[i][1] + 1) 
+ 
+        newPopulation = {} 
+        for i in range(self.populationSize): 
+            selected = random.choice(rouletteWheel) 
+            newPopulation[i] = self.population[selected].copy() 
+ 
+        self.population = newPopulation 
+        self.updatePopulationFitness() 
+ 
+    def crossover(self, crossoverProbability): 
+        for i in range(0, self.populationSize - 1, 2): 
+            if random.random() < crossoverProbability: 
+                point = random.randint(1, self.length - 1) 
+                p1, p2 = self.population[i][0], self.population[i + 1][0] 
+                c1 = p1[:point] + p2[point:] 
+                c2 = p2[:point] + p1[point:] 
+                self.population[i][0] = c1 
+                self.population[i + 1][0] = c2 
+        self.updatePopulationFitness() 
+ 
+    def mutate(self, mutationProbability): 
+        for i in self.population: 
+            individual = list(self.population[i][0]) 
+            for j in range(self.length): 
+                if random.random() < mutationProbability: 
+                    individual[j] = random.choice(string.ascii_lowercase) 
+            self.population[i][0] = ''.join(individual) 
+        self.updatePopulationFitness() 
+ 
+# ===== MAIN PROGRAM ===== 
+ 
+target = input("Enter target string: ").lower() 
+populationSize = 100 
+ga = GA(target, populationSize) 
+ 
+generation = 0 
+while generation < 100: 
+    ga.selectParents() 
+    ga.crossover(0.7) 
+    ga.mutate(0.01) 
+ 
+    best = max(ga.population.values(), key=lambda x: x[1]) 
+ 
+    print(f"Generation {generation} | Best: {best[0]} | Fitness: {best[1]}") 
+ 
+    if best[1] == len(target): 
+        print("Target string matched!") 
+        break 
+ 
+    generation += 1
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#Genetic
+
+
+# code 2
+import random 
+import math 
+ 
+class GA: 
+    def __init__(self, individualSize, populationSize): 
+        self.population = dict() 
+        self.individualSize = individualSize 
+        self.populationSize = populationSize 
+        self.totalFitness = 0 
+        i = 0 
+        while i < populationSize: 
+            listOfBits = [0] * individualSize 
+            listOfLocations = list(range(0, individualSize)) 
+            numberOfOnes = random.randint(0, individualSize - 1) 
+            onesLocations = random.sample(listOfLocations, numberOfOnes) 
+            for j in onesLocations: 
+                listOfBits[j] = 1 
+            self.population[i] = [listOfBits, numberOfOnes] 
+            self.totalFitness += numberOfOnes 
+            i += 1 
+ 
+    def updatePopulationFitness(self): 
+        self.totalFitness = 0 
+        for individual in self.population: 
+            individualFitness = sum(self.population[individual][0]) 
+            self.population[individual][1] = individualFitness 
+            self.totalFitness += individualFitness 
+ 
+    def selectParents(self): 
+        rouletteWheel = [] 
+        wheelSize = self.populationSize * 5 
+        h_n = [] 
+        for individual in self.population: 
+            h_n.append(self.population[individual][1]) 
+        j = 0 
+        for individual in self.population: 
+            individualLength = round(wheelSize * (h_n[j] / sum(h_n))) 
+            j += 1 
+            if individualLength > 0: 
+                i = 0 
+                while i < individualLength: 
+                    rouletteWheel.append(individual) 
+                    i += 1 
+        random.shuffle(rouletteWheel) 
+        parentIndices = [] 
+        i = 0 
+        while i < self.populationSize: 
+            parentIndices.append(rouletteWheel[random.randint(0, len(rouletteWheel) - 1)]) 
+            i += 1 
+        newGeneration = dict() 
+        i = 0 
+        while i < self.populationSize: 
+            newGeneration[i] = self.population[parentIndices[i]].copy() 
+            i += 1 
+        del self.population 
+        self.population = newGeneration.copy() 
+        self.updatePopulationFitness() 
+ 
+    def generateChildren(self, crossoverProbability): 
+        numberOfPairs = round(crossoverProbability * self.populationSize / 2) 
+        individualIndices = list(range(0, self.populationSize)) 
+        random.shuffle(individualIndices) 
+        i = 0 
+        j = 0 
+        while i < numberOfPairs: 
+            crossoverPoint = random.randint(0, self.individualSize - 1) 
+            child1 = self.population[j][0][:crossoverPoint] + self.population[j + 
+1][0][crossoverPoint:] 
+            child2 = self.population[j + 1][0][:crossoverPoint] + self.population[j][0][crossoverPoint:] 
+            self.population[j] = [child1, sum(child1)] 
+            self.population[j + 1] = [child2, sum(child2)] 
+            i += 1 
+            j += 2  
+        self.updatePopulationFitness() 
+ 
+    def mutateChildren(self, mutationProbability): 
+        numberOfBits = round(mutationProbability * self.populationSize * self.individualSize) 
+        totalIndices = list(range(0, self.populationSize * self.individualSize)) 
+        random.shuffle(totalIndices) 
+        swapLocations = random.sample(totalIndices, numberOfBits) 
+        for loc in swapLocations: 
+            individualIndex = math.floor(loc / self.individualSize) 
+            bitIndex = loc % self.individualSize 
+            if self.population[individualIndex][0][bitIndex] == 0: 
+                self.population[individualIndex][0][bitIndex] = 1 
+            else: 
+                self.population[individualIndex][0][bitIndex] = 0 
+        self.updatePopulationFitness() 
+ 
+# Initialize parameters 
+individualSize, populationSize = 8, 10 
+instance = GA(individualSize, populationSize) 
+ 
+# Genetic Algorithm main loop 
+i = 0 
+while True: 
+    instance.selectParents() 
+    instance.generateChildren(0.8) 
+    instance.mutateChildren(0.03) 
+ 
+    # Print current population and fitness 
+    print("Population:", instance.population) 
+    print("Total Fitness:", instance.totalFitness) 
+    print("Generation:", i) 
+ 
+    # Check if any individual has reached the maximum fitness (all ones) 
+    found = False 
+    for individual in instance.population: 
+        if instance.population[individual][1] == individualSize: 
+            found = True 
+            break 
+    if found: 
+        break 
+    i += 1 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    % Hospital System  
+
+
+
+
+
+
+
+
+:- dynamic yes/1, no/1. 
+ 
+go :- 
+    hypothesis(Disease), 
+    write('I believe that the patient has '), write(Disease), nl, 
+    write('TAKE CARE'), nl, nl, 
+    undo. 
+ 
+/* Hypothesis rules */ 
+hypothesis(cold)     :- cold, !. 
+hypothesis(flu)      :- flu, !. 
+hypothesis(typhoid)  :- typhoid, !. 
+hypothesis(measles)  :- measles, !. 
+hypothesis(malaria)  :- malaria, !. 
+hypothesis(unknown). /* no diagnosis found */ 
+ 
+/* Disease identification rules */ 
+cold :- 
+    verify(headache), 
+    verify(runny_nose), 
+    verify(sneezing), 
+    verify(sore_throat), 
+    nl, 
+    write('Advices and Suggestions:'), nl, 
+    write('1: Tylenol/tab'), nl, 
+    write('2: Panadol/tab'), nl, 
+    write('3: Nasal spray'), nl, 
+    write('Please wear warm clothes because cold weather can worsen symptoms.'), nl, nl. 
+ 
+flu :- 
+    verify(fever), 
+    verify(headache), 
+    verify(chills), 
+    verify(body_ache), 
+    nl, 
+    write('Advices and Suggestions:'), nl, 
+    write('1: Tamiflu/tab'), nl, 
+    write('2: Panadol/tab'), nl, 
+    write('3: Zanamivir/tab'), nl, 
+    write('Please take a warm bath and do salt gargling because these help relieve 
+symptoms.'), nl, nl. 
+ 
+typhoid :- 
+    verify(headache), 
+    verify(abdominal_pain), 
+    verify(poor_appetite), 
+    verify(fever), 
+    nl, 
+    write('Advices and Suggestions:'), nl, 
+    write('1: Chloramphenicol/tab'), nl, 
+    write('2: Amoxicillin/tab'), nl, 
+    write('3: Ciprofloxacin/tab'), nl, 
+    write('4: Azithromycin/tab'), nl, 
+    write('Please do complete bed rest and take soft diet because your digestive system 
+needs recovery.'), nl, nl. 
+ 
+measles :- 
+    verify(fever), 
+    verify(runny_nose), 
+    verify(rash), 
+    verify(conjunctivitis), 
+    nl, 
+    write('Advices and Suggestions:'), nl, 
+    write('1: Tylenol/tab'), nl, 
+    write('2: Aleve/tab'), nl, 
+    write('3: Advil/tab'), nl, 
+    write('4: Vitamin A'), nl, 
+    write('Please get rest and use more liquid because hydration is important for recovery.'), 
+nl, nl. 
+ 
+malaria :- 
+    verify(fever), 
+    verify(sweating), 
+    verify(headache), 
+    verify(nausea), 
+    verify(vomiting), 
+    verify(diarrhea), 
+    nl, 
+    write('Advices and Suggestions:'), nl, 
+    write('1: Aralen/tab'), nl, 
+    write('2: Qualaquin/tab'), nl, 
+    write('3: Plaquenil/tab'), nl, 
+    write('4: Mefloquine'), nl, 
+    write('Please do not sleep in open air and cover your full skin because mosquitoes spread 
+malaria.'), nl, nl. 
+ 
+/* How to ask questions */ 
+ask(Question) :- 
+    write('Does the patient have the following symptom: '), 
+    write(Question), 
+    write('? (yes/no): '), 
+    read(Response), 
+    nl, 
+    ( (Response == yes ; Response == y) 
+      -> assert(yes(Question)) 
+      ; assert(no(Question)), fail 
+    ). 
+ 
+/* How to verify something */ 
+verify(S) :- 
+    (yes(S) -> true ; 
+     no(S)  -> fail ; 
+     ask(S)). 
+/* Undo all yes/no assertions */ 
+undo :- retract(yes(_)), fail. 
+undo :- retract(no(_)), fail. 
+undo. 
+/* Start the expert system */ 
+:- initialization(start). 
+start :- 
+write('MEDICAL DIAGNOSIS EXPERT SYSTEM'), nl, 
+write('Answer questions about symptoms with "yes." or "no."'), nl, nl, 
+go.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+% CAR DIAGNOSIS 
+
+:- dynamic yes/1, no/1. 
+/* Main Predicate */ 
+start :- 
+write('CAR DIAGNOSIS EXPERT SYSTEM'), nl, 
+write('Answer questions about your car issues with "yes." or "no."'), nl, nl, 
+problem(CarIssue), 
+nl, 
+write('The issue with your car seems to be: '), 
+write(CarIssue), 
+nl, nl, 
+write('Recommended Actions:'), 
+nl, 
+action(CarIssue), 
+nl, 
+reset. 
+/* Hypotheses to Test */ 
+problem(dead_battery)      :- dead_battery, !. 
+problem(flat_tire)        
+ :- flat_tire, !. 
+problem(broken_headlight)  :- broken_headlight, !. 
+problem(engine_overheating) :- engine_overheating, !. 
+problem(unknown) :-  
+write('Unable to determine the exact problem.'), nl, 
+write('Please consult a professional mechanic.'). 
+/* Rules for Identifying Problems */ 
+dead_battery :- 
+verify(car_wont_start), 
+verify(dim_lights), 
+verify(clicking_noise), 
+nl, 
+write('1: Check and replace the car battery.'), nl, 
+write('2: Jumpstart the car using jumper cables.'), nl, 
+write('3: Check battery terminals for corrosion.'). 
+flat_tire :- 
+verify(car_pulls_to_one_side), 
+verify(low_tire_pressure), 
+verify(visible_tire_damage), 
+nl, 
+write('1: Replace the flat tire with a spare.'), nl, 
+write('2: Use a tire inflator or sealant temporarily.'), nl, 
+write('3: Visit a tire repair shop as soon as possible.'). 
+broken_headlight :- 
+verify(headlight_doesnt_work), 
+verify(no_visible_bulb_damage), 
+verify(fuse_blown), 
+nl, 
+write('1: Replace the blown fuse (check your manual for location).'), nl, 
+write('2: Check the wiring connections.'), nl, 
+write('3: If problem persists, replace the headlight assembly.'). 
+engine_overheating :- 
+verify(temperature_gauge_high), 
+verify(steam_from_engine), 
+verify(low_coolant_level), 
+nl, 
+write('1: Turn off the engine immediately and let it cool.'), nl, 
+write('2: Check and refill the coolant (when engine is cool).'), nl, 
+write('3: Inspect for leaks in the cooling system.'), nl, 
+write('4: Check radiator fan operation.'). 
+/* Action recommendations */ 
+action(dead_battery) :- 
+write('Additional Tips:'), nl, 
+write('- Battery typically lasts 3-5 years'), nl, 
+write('- Consider getting your alternator checked'). 
+action(flat_tire) :- 
+write('Additional Tips:'), nl, 
+write('- Check tire pressure monthly'), nl, 
+write('- Rotate tires every 5,000-8,000 miles'). 
+action(broken_headlight) :- 
+write('Additional Tips:'), nl, 
+write('- Replace headlights in pairs'), nl, 
+write('- Consider upgrading to LED bulbs'). 
+action(engine_overheating) :- 
+write('Additional Tips:'), nl, 
+write('- Never open radiator cap when hot'), nl, 
+write('- Check coolant level weekly'). 
+action(unknown) :- true. 
+/* Ask Questions */ 
+ask(Question) :- 
+write('Does your car have this symptom: '), 
+write(Question), 
+write('? (yes/no): '), 
+read(Response), 
+nl, 
+( (Response == yes ; Response == y) -> assert(yes(Question)) 
+;  (assert(no(Question)), fail) 
+). 
+/* Verify Symptoms */ 
+verify(Symptom) :- 
+(yes(Symptom) -> true ; 
+no(Symptom)  -> fail ; 
+ask(Symptom)). 
+/* Reset the Assertions */ 
+reset :- retract(yes(_)), fail. 
+reset :- retract(no(_)), fail. 
+reset. 
+/* Start the expert system */ 
+:- initialization(start).
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+% PET 
+
+
+
+:- dynamic yes/1, no/1. 
+% Start point 
+start :- 
+write('PET RECOMMENDATION SYSTEM'), nl, 
+write('Answer questions with yes. or no.'), nl, nl, 
+recommend(Pet), 
+nl, write('Recommended pet: '), write(Pet), nl, nl, 
+give_tips(Pet), 
+undo. 
+% Recommendation rules 
+recommend(dog)  :- prefers(active), has_space, likes_outdoor, !. 
+recommend(cat)  :- prefers(independent), indoor_ok, !. 
+recommend(fish) :- prefers(low_maintenance), small_space, !. 
+recommend(bird) :- prefers(social), can_handle_noise, !. 
+recommend(no_pet) :- prefers(no_pets), !. 
+recommend(no_pet) :- write('No suitable pet recommendation.'), nl, fail. 
+% Additional tips 
+give_tips(dog)  :- write('Tips: Daily walks, training, vaccinations.'), nl. 
+give_tips(cat)  :- write('Tips: Litter, scratching post, indoor play.'), nl. 
+give_tips(fish) :- write('Tips: Tank maintenance, water quality checks.'), nl. 
+give_tips(bird) :- write('Tips: Cage size, social time, toys.'), nl. 
+give_tips(no_pet) :- write('Consider volunteering at shelters if you like animals.'), nl. 
+% Preference predicates 
+prefers(active)            
+:- verify(wants_active_pet). 
+prefers(independent)       
+:- verify(wants_independent_pet). 
+prefers(low_maintenance)   :- verify(wants_low_maintenance). 
+prefers(social):- verify(wants_social_pet). 
+prefers(no_pets):- verify(wants_no_pet). 
+has_space     :- verify(has_large_space). 
+small_space   :- verify(has_small_space). 
+indoor_ok     :- verify(prefers_indoor). 
+likes_outdoor :- verify(enjoys_outdoor_activity). 
+can_handle_noise :- verify(can_handle_noise). 
+% Question mechanism 
+ask(Question) :- 
+write('Does the person: '), write(Question), write('? (yes/no): '), 
+read(Response), nl, 
+( (Response == yes ; Response == y) -> assert(yes(Question)) ; assert(no(Question)), fail ). 
+verify(S) :- (yes(S) -> true ; (no(S) -> fail ; ask(S))). 
+% Undo assertions 
+undo :- retract(yes(_)), fail. 
+undo :- retract(no(_)), fail. 
+undo. 
+% Initialize when file loaded (optional) 
+:- initialization(start).
